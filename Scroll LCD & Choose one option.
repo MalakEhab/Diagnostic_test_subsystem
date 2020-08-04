@@ -1,0 +1,189 @@
+#include "LiquidCrystal.h"
+#define L1 "First  test "
+#define L2 "Second test "
+#define L3 "Third  test "
+#define L4 "Fourth test "
+#define L5 " **Exit**  "
+#define L6 "            "
+#define joyX A0
+#define joyY A1
+int Ln = 0;
+int  FlageSW = 0;
+// initialize the library by providing the nuber of pins to it
+LiquidCrystal lcd(8,9,4,5,6,7); //lcd(rs, en, d4, d5, d6, d7);
+
+int PB_1 = 3;              // The First  Push  Button   attached to Interrupt 0
+int SW   = 2;              // SW in Joystick            attached to Interrupt 1
+int PB_2 = 21;             // The Second  Push  Button  attached to Interrupt 2
+int redPin   =  11;        // RGB LED PWM pin11
+int greenPin =  12;        // RGB LED PWM pin12
+int bluePin  =  13;        // RGB LED PWM pin13
+
+unsigned long previousMillis = 0;        // will store last time
+unsigned long currentMillis;
+
+const long interval = 250;           // interval in milliseconds
+
+int  counter = 0;
+bool state1  = 0;  
+bool state2  = 0;  
+int  state3  = 6; 
+int  state4  = 0;  
+int  error   = 0; 
+
+
+void PB1_Fun() {
+  state1 = 1;
+  counter=0; 
+}
+void PB2_Fun() {
+  error = 1;
+}
+void SW_Fun() {
+  FlageSW=1;
+}
+
+void setColor(int R,int G, int B) {
+  analogWrite(redPin  , R );
+  analogWrite(greenPin, G );
+  analogWrite(bluePin , B );
+}
+
+void RGB_OFF(){ //turn off RGB
+  analogWrite(redPin  , 0 );
+  analogWrite(greenPin, 0 );
+  analogWrite(bluePin , 0 );
+  }
+
+
+void setup() {                 //// the setup routine runs once when you press reset:
+  lcd.begin(16,2);
+  lcd.setCursor(0,0);         // set cursor position to start of first line on the LCD
+
+  pinMode(redPin,  OUTPUT);
+  pinMode(greenPin,OUTPUT);
+  pinMode(bluePin, OUTPUT);
+
+  pinMode(PB_1, INPUT);
+  pinMode(PB_2, INPUT);
+  pinMode(SW  , INPUT);
+  attachInterrupt(digitalPinToInterrupt(PB_1), PB1_Fun , RISING);
+  attachInterrupt(digitalPinToInterrupt(PB_2), PB2_Fun , RISING);
+  attachInterrupt(digitalPinToInterrupt(SW)  , SW_Fun  , RISING);
+
+}
+
+void loop() {                 // the loop routine runs over and over again forever
+ int   axisx  = analogRead(joyX); 
+ int   nv = 1;
+ if ( FlageSW==1){
+  state2 = !state2;
+  state4=0; error=0;
+  if (state2==0) {state3 = Ln;}
+  if (state2==1) {  counter=0; Ln=0; state3 = 6;}
+  delay(500);
+  FlageSW=0;
+  }
+ currentMillis = millis();
+ if (currentMillis - previousMillis >= interval) {
+    previousMillis = currentMillis;
+    counter++;
+  } 
+ if(state1==1){
+  lcd.display();
+  lcd.setCursor(0,0);         // set cursor position to start of first line on the LCD
+  lcd.print("Test Mode ON");
+  lcd.setCursor(0,1); 
+  lcd.print(L6);
+  if (counter==4) { state2=1; state1=0;}
+  }
+  if(state2==1){
+   if (Ln == 0 ){
+    lcd.setCursor(0, 0);
+    lcd.print(L1);
+    lcd.setCursor(0, 1);
+    lcd.print(L2);
+   }
+   if (axisx >= 600  && nv == 1) { //Scroll down
+    if (Ln == 0  && nv == 1) {
+      lcd.clear();
+      lcd.print(L2);
+      lcd.setCursor(0, 1);
+      lcd.print(L3);
+      Ln = 1;
+      nv = 0;
+    }
+    if (Ln == 1  && nv == 1) {
+      lcd.clear();
+      lcd.print(L3);
+      lcd.setCursor(0, 1);
+      lcd.print(L4);
+      Ln = 2;
+      nv = 0;
+    }
+    if (Ln == 2  && nv == 1) {
+      lcd.clear();
+      lcd.print(L4);
+      lcd.setCursor(0, 1);
+      lcd.print(L5);
+      Ln = 3;
+      nv = 0;
+    }
+    if (Ln == 3  && nv == 1) {
+      lcd.clear();
+      lcd.print(L5);
+      lcd.setCursor(0, 1);
+      lcd.print(L6);
+      Ln = 4;
+      nv = 0;
+    }   
+  }
+  if (axisx <= 400  && nv == 1) { //Scroll up
+    if (Ln == 1  && nv == 1) {
+      lcd.clear();
+      lcd.print(L1);
+      lcd.setCursor(0, 1);
+      lcd.print(L2);
+      Ln = 0;
+      nv = 0;
+    }
+    if (Ln == 2  && nv == 1) {
+      lcd.clear();
+      lcd.print(L2);
+      lcd.setCursor(0, 1);
+      lcd.print(L3);
+      Ln = 1;
+      nv = 0;
+    }
+    if (Ln == 3  && nv == 1) {
+      lcd.clear();
+      lcd.print(L3);
+      lcd.setCursor(0, 1);
+      lcd.print(L4);
+      Ln = 2;
+      nv = 0;
+    }
+    if (Ln == 4  && nv == 1) {
+      lcd.clear();
+      lcd.print(L4);
+      lcd.setCursor(0, 1);
+      lcd.print(L5);
+      Ln = 3;
+      nv = 0;
+    }    
+    }
+    delay(1000);
+    }
+    
+  if(state3>=0 && state3<4){
+    if      (counter%2 == 0) { setColor(0,0,255);} //Blue ON
+    else if (counter%2 == 1) { setColor(0,0,0);  } //Blue OFF
+    if (counter==20) {state3=6; state4=1;}
+    }
+  if(state3==4) {lcd.noDisplay(); state3=6;} // off LCD,RGB
+  if(state3==6){setColor(0,0,0);}
+  if(state4==1){
+    if      (error==1) setColor(255,0,0);
+    else if (error==0) setColor(0,255,0);
+    }
+}
