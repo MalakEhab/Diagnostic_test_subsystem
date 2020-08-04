@@ -1,4 +1,5 @@
 # Diagnostic_test_subsystem
+The program is written on arduino mega 2560 and using LCD 16 × 2 , Joystick, 2-Pushbutton, RGB LED.
 The testing should be initialized by pressing of a push button,
 where in that case in the first line of the LCD the message “Test Mode ON” should be displayed for 1 second.
 After the 1 second has elapsed the LCD display will show the list of options.
